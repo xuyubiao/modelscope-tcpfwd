@@ -20,6 +20,13 @@ CONNECT_TIMEOUT = float(os.environ.get("PROXY_CONNECT_TIMEOUT", "10"))
 READ_TIMEOUT = float(os.environ.get("PROXY_READ_TIMEOUT", "300"))
 CORS_ENABLED = os.environ.get("CORS_ENABLED", "1") == "1"
 
+# 上游认证注入：设置 UPSTREAM_TOKEN 后，转发前用它覆盖上游请求的认证头。
+# 背景：调用方的魔搭 token 只用于魔搭网关鉴权，不能透传给上游，
+# 而 Authorization 头只有一个，所以上游 token 必须由代理服务端注入。
+UPSTREAM_TOKEN = os.environ.get("UPSTREAM_TOKEN", "")
+UPSTREAM_AUTH_HEADER = os.environ.get("UPSTREAM_AUTH_HEADER", "Authorization")
+UPSTREAM_AUTH_SCHEME = os.environ.get("UPSTREAM_AUTH_SCHEME", "Bearer")
+
 METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
 
 # RFC 7230 §6.1：逐跳（hop-by-hop）头不得转发
@@ -76,6 +83,20 @@ def proxy(path: str):
     headers["X-Forwarded-For"] = request.remote_addr or ""
     headers["X-Forwarded-Proto"] = request.scheme
     headers["X-Forwarded-Host"] = request.host
+
+    # 服务端注入上游认证（若配置了 UPSTREAM_TOKEN）：覆盖调用方带来的同名认证头
+    if UPSTREAM_TOKEN:
+        headers = {
+            key: value
+            for key, value in headers.items()
+            if key.lower() != UPSTREAM_AUTH_HEADER.lower()
+        }
+        credential = (
+            f"{UPSTREAM_AUTH_SCHEME} {UPSTREAM_TOKEN}"
+            if UPSTREAM_AUTH_SCHEME
+            else UPSTREAM_TOKEN
+        )
+        headers[UPSTREAM_AUTH_HEADER] = credential
 
     try:
         upstream = session.request(
