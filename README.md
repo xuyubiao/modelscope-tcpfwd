@@ -1,4 +1,4 @@
-# edgefn-proxy
+# modelscope-tcpfwd
 
 一个简单的 Python 反向代理：把收到的所有请求原样转发到 `https://api.edgefn.net`，
 并把上游的响应（含状态码、响应头、流式 body）透传回客户端。适合部署到
