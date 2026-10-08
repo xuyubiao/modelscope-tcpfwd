@@ -26,8 +26,24 @@ python app.py
 | `PROXY_CONNECT_TIMEOUT` | `10` | 上游连接超时（秒） |
 | `PROXY_READ_TIMEOUT` | `300` | 上游读取超时（秒） |
 | `CORS_ENABLED` | `1` | 是否自动加 CORS 头（`0` 关闭） |
+| `UPSTREAM_TOKEN` | 空 | 上游（edgefn）的 token；设置后转发前自动注入，覆盖调用方带来的认证头 |
+| `UPSTREAM_AUTH_HEADER` | `Authorization` | 注入上游 token 的头名（如 `X-API-Key`） |
+| `UPSTREAM_AUTH_SCHEME` | `Bearer` | 认证 scheme；设为空则直接使用 token 原值 |
 
 `GET /health` 为本地健康检查接口（不转发），返回代理进程状态。
+
+## 上游认证（edgefn token）
+
+调用链路上有两道认证：魔搭网关要魔搭 token、上游 edgefn 要 edgefn token，
+而 `Authorization` 头只有一个，无法同时透传两者。因此代理支持**服务端注入**：
+
+- 在创空间控制台的环境变量中设置 `UPSTREAM_TOKEN` 为 edgefn 的 token
+  （**不要写进代码或公开仓库**）；
+- 转发时代理会自动把上游请求的认证头替换为该 token；
+- 调用方只需要带魔搭 token，edgefn token 对调用方不可见；
+- 若 edgefn 的认证不是 `Authorization: Bearer` 形式，用
+  `UPSTREAM_AUTH_HEADER` / `UPSTREAM_AUTH_SCHEME` 调整（scheme 为空则用 token 原值）；
+- 不设置 `UPSTREAM_TOKEN` 时保持透明透传（原样转发调用方的头）。
 
 ## 部署到 ModelScope 创空间
 
