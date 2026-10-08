@@ -31,7 +31,19 @@ python app.py
 
 ## 部署到 ModelScope 创空间
 
-1. 在 [modelscope.cn/studios](https://modelscope.cn/studios) 创建创空间，关联本仓库；
-2. 入口文件选择 `app.py`（或按页面提示配置启动命令 `python app.py`）；
-3. 确认应用监听端口为 `7860`（`PORT` 环境变量）；
-4. 启动后，通过创空间分配的公网域名访问，请求会被转发到 `https://api.edgefn.net`。
+经官方文档核实，普通 Python Web 服务应选择 **Docker** 类型的创空间：
+
+1. 在 [modelscope.cn/studios](https://modelscope.cn/studios) 点击「创建创空间」，
+   SDK 类型选 **Docker**（前置要求：绑定阿里云账号并完成实名认证）；
+2. 代码提交：创空间**不支持直接关联 GitHub 仓库**，需把代码推送到创空间自带的
+   魔搭 Git 仓库（地址形如 `https://www.modelscope.cn/{用户名}/{仓库名}.git`，
+   用魔搭 access token 做密码），或在网页端拖拽上传；
+3. 仓库需包含 `Dockerfile` + `app.py` + `requirements.txt`（本仓库已备好）；
+4. 容器内应用**必须监听 7860 端口且绑定 0.0.0.0**（单应用只能暴露这一个端口），
+   本应用默认即 `0.0.0.0:7860`；
+5. 上线后每个创空间有独立公网访问链接，请求将被转发到 `https://api.edgefn.net`。
+
+官方文档：
+- [创空间创建与搭建](https://modelscope.cn/docs/studios/create)
+- [Docker 创空间](https://modelscope.cn/docs/studios/docker)
+- [快速创建并部署](https://modelscope.cn/docs/studios/quick-create)
